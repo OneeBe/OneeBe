@@ -1,0 +1,652 @@
+{% extends "base.html" %}
+
+{% block title %}Мой профиль - {{ player.nickname }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Profile Sidebar -->
+        <div class="col-lg-4">
+            <div class="profile-sidebar">
+                <!-- Profile Header -->
+                <div class="profile-header text-center p-4 mb-4" 
+                     style="background: linear-gradient(135deg, {{ player.profile_banner_color }}, {{ player.profile_banner_color }}44); border-radius: 15px; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"stars\" width=\"10\" height=\"10\" patternUnits=\"userSpaceOnUse\"><circle cx=\"5\" cy=\"5\" r=\"1\" fill=\"rgba(255,255,255,0.1)\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23stars)\"/></svg>'); opacity: 0.3;"></div>
+
+                    <div style="position: relative; z-index: 1;">
+                        <img src="{{ player.minecraft_skin_url }}" alt="{{ player.nickname }}" 
+                             class="rounded-circle mb-3" 
+                             style="width: 96px; height: 96px; image-rendering: pixelated; border: 4px solid rgba(255,255,255,0.2);">
+
+                        <h3 class="text-white fw-bold mb-1">
+                            {% if player.nickname_gradient %}
+                            <span style="background: {{ player.nickname_gradient }}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                                {{ player.nickname }}
+                            </span>
+                            {% else %}
+                            {{ player.nickname }}
+                            {% endif %}
+                        </h3>
+
+                        {% if player.custom_status %}
+                        <p class="text-white-50 mb-2">{{ player.custom_status }}</p>
+                        {% endif %}
+
+                        {% if player.active_custom_title %}
+                        <div class="custom-title mb-2 {% if player.title_gradient %}title-gradient-animated{% endif %}" 
+                             style="{% if player.title_gradient %}background: {{ player.title_gradient }};{% else %}background: linear-gradient(45deg, {{ player.active_custom_title.color }}, {{ player.active_custom_title.glow_color }});{% endif %} -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold;">
+                            {{ player.active_custom_title.display_name }}
+                        </div>
+                        {% elif player.role != 'Игрок' %}
+                        <div class="custom-title mb-2 {% if player.title_gradient %}title-gradient-animated{% endif %}" 
+                             style="{% if player.title_gradient %}background: {{ player.title_gradient }};{% else %}background: linear-gradient(45deg, #ffd700, #ffaa00);{% endif %} -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold;">
+                            {{ player.role }}
+                        </div>
+                        {% endif %}
+
+                        <div class="level-badge d-inline-flex align-items-center px-3 py-1 bg-dark rounded-pill">
+                            <i class="fas fa-star text-warning me-2"></i>
+                            <span class="text-white">Уровень {{ player.level }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="stats-quick mb-4">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="stat-card text-center p-3" style="background: var(--bg-secondary); border-radius: 10px;">
+                                <div class="stat-value text-success fw-bold">{{ player.kills }}</div>
+                                <div class="stat-label small text-muted">Киллы</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card text-center p-3" style="background: var(--bg-secondary); border-radius: 10px;">
+                                <div class="stat-value text-warning fw-bold">{{ player.wins }}</div>
+                                <div class="stat-label small text-muted">Победы</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card text-center p-3" style="background: var(--bg-secondary); border-radius: 10px;">
+                                <div class="stat-value text-info fw-bold">{{ player.beds_broken }}</div>
+                                <div class="stat-label small text-muted">Кровати</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card text-center p-3" style="background: var(--bg-secondary); border-radius: 10px;">
+                                <div class="stat-value text-primary fw-bold">{{ player.kd_ratio }}</div>
+                                <div class="stat-label small text-muted">K/D</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Links -->
+                {% set social_networks = player.get_social_networks_list() %}
+                {% if player.discord_tag or player.youtube_channel or player.twitch_channel or social_networks %}
+                <div class="social-links-sidebar mb-4">
+                    <h6 class="text-muted mb-3"><i class="fas fa-users me-2"></i>Социальные сети</h6>
+                    
+                    <!-- Social Links Grid -->
+                    <div class="profile-social-links">
+                        <!-- Legacy fields -->
+                        {% if player.discord_tag %}
+                        <a href="#" class="profile-social-link" title="Discord" aria-label="Discord">
+                            <i class="fab fa-discord"></i>
+                            <span>Discord</span>
+                        </a>
+                        {% endif %}
+                        {% if player.youtube_channel %}
+                        <a href="{{ player.youtube_channel }}" target="_blank" rel="noopener noreferrer" class="profile-social-link" title="YouTube" aria-label="YouTube">
+                            <i class="fab fa-youtube"></i>
+                            <span>YouTube</span>
+                        </a>
+                        {% endif %}
+                        {% if player.twitch_channel %}
+                        <a href="{{ player.twitch_channel }}" target="_blank" rel="noopener noreferrer" class="profile-social-link" title="Twitch" aria-label="Twitch">
+                            <i class="fab fa-twitch"></i>
+                            <span>Twitch</span>
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Extended social networks -->
+                        {% for network in social_networks %}
+                        <a href="{{ network.value if network.value.startswith('http') else 'https://' + network.value }}" target="_blank" rel="noopener noreferrer" class="profile-social-link" title="{{ network.type.title() }}" aria-label="{{ network.type.title() }}">
+                            {% if network.type == 'discord' %}
+                                <i class="fab fa-discord"></i>
+                            {% elif network.type == 'vk' %}
+                                <i class="fab fa-vk"></i>
+                            {% elif network.type == 'telegram' %}
+                                <i class="fab fa-telegram"></i>
+                            {% elif network.type == 'twitter' %}
+                                <i class="fab fa-x-twitter"></i>
+                            {% elif network.type == 'instagram' %}
+                                <i class="fab fa-instagram"></i>
+                            {% elif network.type == 'tiktok' %}
+                                <i class="fab fa-tiktok"></i>
+                            {% elif network.type == 'steam' %}
+                                <i class="fab fa-steam"></i>
+                            {% else %}
+                                <i class="fas fa-link"></i>
+                            {% endif %}
+                            <span>{{ network.type.title() }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Profile Settings -->
+            <div class="profile-settings mb-4">
+                <div class="card border-0" style="background: var(--bg-secondary);">
+                    <div class="card-header bg-transparent border-0">
+                        <h5 class="mb-0"><i class="fas fa-user-edit me-2 text-primary"></i>Настройки профиля</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('update_profile') }}">
+                            <div class="row g-3">
+                                <!-- Personal Info -->
+                                <div class="col-md-6">
+                                    <label class="form-label">Настоящее имя</label>
+                                    <input type="text" class="form-control" name="real_name" 
+                                           value="{{ player.real_name or '' }}" placeholder="Ваше настоящее имя">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">День рождения</label>
+                                    <input type="date" class="form-control" name="birthday" 
+                                           value="{{ player.birthday.strftime('%Y-%m-%d') if player.birthday else '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Местоположение</label>
+                                    <input type="text" class="form-control" name="location" 
+                                           value="{{ player.location or '' }}" placeholder="Город, страна">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Пользовательский статус</label>
+                                    <input type="text" class="form-control" name="custom_status" 
+                                           value="{{ player.custom_status or '' }}" placeholder="Ваш статус" maxlength="100">
+                                </div>
+
+                                <!-- Gaming Info -->
+                                <div class="col-md-6">
+                                    <label class="form-label">Любимый сервер</label>
+                                    <input type="text" class="form-control" name="favorite_server" 
+                                           value="{{ player.favorite_server or '' }}" placeholder="Например: Hypixel">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Любимая карта</label>
+                                    <input type="text" class="form-control" name="favorite_map" 
+                                           value="{{ player.favorite_map or '' }}" placeholder="Например: Lighthouse">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Предпочитаемый режим</label>
+                                    <select class="form-select" name="preferred_gamemode">
+                                        <option value="">Выберите режим</option>
+                                        <option value="Solo" {{ 'selected' if player.preferred_gamemode == 'Solo' else '' }}>Solo</option>
+                                        <option value="Doubles" {{ 'selected' if player.preferred_gamemode == 'Doubles' else '' }}>Doubles</option>
+                                        <option value="3v3v3v3" {{ 'selected' if player.preferred_gamemode == '3v3v3v3' else '' }}>3v3v3v3</option>
+                                        <option value="4v4v4v4" {{ 'selected' if player.preferred_gamemode == '4v4v4v4' else '' }}>4v4v4v4</option>
+                                        <option value="3v8" {{ 'selected' if player.preferred_gamemode == '3v8' else '' }}>3v8</option>
+                                        <option value="4v8" {{ 'selected' if player.preferred_gamemode == '4v8' else '' }}>4v8</option>
+                                        <option value="KitPvP" {{ 'selected' if player.preferred_gamemode == 'KitPvP' else '' }}>KitPvP</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Цвет баннера профиля</label>
+                                    <input type="color" class="form-control form-control-color w-100" name="profile_banner_color" 
+                                           value="{{ player.profile_banner_color or '#3498db' }}">
+                                </div>
+
+                                <!-- Extended Social Networks -->
+                                <div class="col-12">
+                                    <label class="form-label">Социальные сети (старый формат)</label>
+                                    <div id="social-networks-container">
+                                        {% set social_networks = player.get_social_networks_list() %}
+                                        {% if social_networks %}
+                                            {% for network in social_networks %}
+                                            <div class="social-network-item d-flex align-items-center mb-2">
+                                                <select class="form-select me-2" name="social_type[]" style="max-width: 150px;">
+                                                    <option value="discord" {% if network.type == 'discord' %}selected{% endif %}>Discord</option>
+                                                    <option value="telegram" {% if network.type == 'telegram' %}selected{% endif %}>Telegram</option>
+                                                    <option value="vk" {% if network.type == 'vk' %}selected{% endif %}>VK</option>
+                                                    <option value="twitter" {% if network.type == 'twitter' %}selected{% endif %}>Twitter</option>
+                                                    <option value="instagram" {% if network.type == 'instagram' %}selected{% endif %}>Instagram</option>
+                                                    <option value="tiktok" {% if network.type == 'tiktok' %}selected{% endif %}>TikTok</option>
+                                                    <option value="steam" {% if network.type == 'steam' %}selected{% endif %}>Steam</option>
+                                                </select>
+                                                <input type="text" class="form-control me-2" name="social_value[]" 
+                                                       value="{{ network.value }}" placeholder="Ссылка или никнейм">
+                                                <button type="button" class="btn btn-danger btn-sm remove-social">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+
+                                    <button type="button" class="btn btn-success btn-sm mt-2" id="add-social">
+                                        <i class="fas fa-plus me-1"></i>Добавить соц.сеть
+                                    </button>
+
+                                    <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        const addSocialBtn = document.getElementById('add-social');
+                                        const container = document.getElementById('social-networks-container');
+
+                                        addSocialBtn.addEventListener('click', function() {
+                                            const newItem = document.createElement('div');
+                                            newItem.className = 'social-network-item d-flex align-items-center mb-2';
+                                            newItem.innerHTML = `
+                                                <select class="form-select me-2" name="social_type[]" style="max-width: 150px;">
+                                                    <option value="discord">Discord</option>
+                                                    <option value="telegram">Telegram</option>
+                                                    <option value="vk">VK</option>
+                                                    <option value="twitter">Twitter</option>
+                                                    <option value="instagram">Instagram</option>
+                                                    <option value="tiktok">TikTok</option>
+                                                    <option value="steam">Steam</option>
+                                                </select>
+                                                <input type="text" class="form-control me-2" name="social_value[]" 
+                                                       placeholder="Ссылка или никнейм">
+                                                <button type="button" class="btn btn-danger btn-sm remove-social">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            `;
+                                            container.appendChild(newItem);
+
+                                            // Add remove functionality to new button
+                                            newItem.querySelector('.remove-social').addEventListener('click', function() {
+                                                newItem.remove();
+                                            });
+                                        });
+
+                                        // Add remove functionality to existing buttons
+                                        document.querySelectorAll('.remove-social').forEach(btn => {
+                                            btn.addEventListener('click', function() {
+                                                this.closest('.social-network-item').remove();
+                                            });
+                                        });
+                                    });
+                                    </script>
+                                </div>
+
+                                <!-- Custom Avatar and Banner with Level Restrictions -->
+                                <div class="col-12">
+                                    <h6 class="text-warning mb-3">Кастомизация аватара и баннера</h6>
+                                </div>
+
+                                <!-- Custom Avatar -->
+                                <div class="col-md-6">
+                                    <label class="form-label d-flex align-items-center">
+                                        Кастомный аватар (URL)
+                                        {% if not player.can_use_custom_avatars %}
+                                        <i class="fas fa-lock text-danger ms-2" title="Разблокируется на 20 уровне"></i>
+                                        {% endif %}
+                                    </label>
+                                    {% if player.can_use_custom_avatars %}
+                                    <input type="url" class="form-control" name="custom_avatar_url" 
+                                           value="{{ player.custom_avatar_url or '' }}" placeholder="https://example.com/avatar.png">
+                                    {% else %}
+                                    <input type="url" class="form-control" disabled 
+                                           placeholder="🔒 Разблокируется на 20 уровне">
+                                    <small class="text-muted">Текущий уровень: {{ player.level }}</small>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Animated Avatar -->
+                                <div class="col-md-6">
+                                    <label class="form-label d-flex align-items-center">
+                                        Анимированный аватар (GIF)
+                                        {% if not player.can_use_animated_avatars %}
+                                        <i class="fas fa-lock text-danger ms-2" title="Разблокируется на 70 уровне"></i>
+                                        {% endif %}
+                                    </label>
+                                    {% if player.can_use_animated_avatars %}
+                                    <input type="url" class="form-control" name="animated_avatar_url" 
+                                           placeholder="https://example.com/avatar.gif">
+                                    {% else %}
+                                    <input type="url" class="form-control" disabled 
+                                           placeholder="🔒 Разблокируется на 70 уровне">
+                                    <small class="text-muted">Осталось уровней: {{ 70 - player.level }}</small>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Custom Banner -->
+                                <div class="col-md-6">
+                                    <label class="form-label d-flex align-items-center">
+                                        Кастомный баннер (URL)
+                                        {% if not player.can_use_custom_banners %}
+                                        <i class="fas fa-lock text-danger ms-2" title="Разблокируется на 30 уровне"></i>
+                                        {% endif %}
+                                    </label>
+                                    {% if player.can_use_custom_banners %}
+                                    <input type="url" class="form-control" name="custom_banner_url" 
+                                           value="{{ player.custom_banner_url or '' }}" 
+                                           placeholder="https://example.com/banner.jpg">
+                                    {% else %}
+                                    <input type="url" class="form-control" disabled 
+                                           placeholder="🔒 Разблокируется на 30 уровне">
+                                    <small class="text-muted">Осталось уровней: {{ 30 - player.level }}</small>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Animated Banner -->
+                                <div class="col-md-6">
+                                    <label class="form-label d-flex align-items-center">
+                                        Анимированный баннер (GIF)
+                                        {% if not player.can_use_animated_banners %}
+                                        <i class="fas fa-lock text-danger ms-2" title="Разблокируется на 135 уровне"></i>
+                                        {% endif %}
+                                    </label>
+                                    {% if player.can_use_animated_banners %}
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" name="banner_is_animated" 
+                                               {{ 'checked' if player.banner_is_animated else '' }}>
+                                        <label class="form-check-label">Анимированный баннер</label>
+                                    </div>
+                                    {% else %}
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" disabled>
+                                        <label class="form-check-label text-muted">
+                                            🔒 Разблокируется на 135 уровне (осталось: {{ 135 - player.level }})
+                                        </label>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Bio -->
+                                <div class="col-12">
+                                    <label class="form-label">О себе</label>
+                                    <textarea class="form-control" name="bio" rows="4" 
+                                              placeholder="Расскажите о себе...">{{ player.bio or '' }}</textarea>
+                                </div>
+
+                                <!-- Privacy -->
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" name="profile_is_public" 
+                                               {{ 'checked' if player.profile_is_public else '' }}>
+                                        <label class="form-check-label">
+                                            Публичный профиль (другие игроки могут видеть ваш профиль)
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Сохранить изменения
+                                    </button>
+                                    <a href="{{ url_for('public_profile', nickname=player.nickname) }}" class="btn btn-outline-info ms-2">
+                                        <i class="fas fa-eye me-2"></i>Просмотреть профиль
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Title and Role Management -->
+            <div class="title-role-management mb-4">
+                <h4 class="text-warning">
+                    <i class="fas fa-crown me-2"></i>Управление титулами и ролями
+                </h4>
+
+                <!-- Available Titles -->
+                {% if player.custom_titles %}
+                <div class="available-titles mb-4">
+                    <h5 class="text-info">
+                        <i class="fas fa-award me-2"></i>Доступные титулы
+                    </h5>
+                    <div class="row g-3">
+                        {% for player_title in player.custom_titles %}
+                        {% if player_title.title %}
+                        <div class="col-md-6">
+                            <div class="title-card {{ 'active-title' if player_title.is_active else '' }}">
+                                <div class="title-preview" 
+                                     style="background: linear-gradient(45deg, {{ player_title.title.color }}, {{ player_title.title.glow_color }}); 
+                                            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+                                            background-clip: text; font-weight: bold; font-size: 1.1rem;">
+                                    {{ player_title.title.display_name }}
+                                </div>
+                                <div class="title-actions mt-2">
+                                    {% if player_title.is_active %}
+                                    <span class="badge bg-success">Активен</span>
+                                    {% else %}
+                                    <form method="POST" action="{{ url_for('activate_player_title') }}" style="display: inline;">
+                                        <input type="hidden" name="title_id" value="{{ player_title.title.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                                            <i class="fas fa-check me-1"></i>Активировать
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Deactivate all titles option -->
+                    {% if player.active_custom_title %}
+                    <div class="mt-3">
+                        <form method="POST" action="{{ url_for('deactivate_all_titles') }}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Убрать все титулы
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Custom Role Section -->
+                <div class="custom-role mb-4">
+                    {% if player.custom_role_purchased %}
+                    <h5 class="text-warning">
+                        <i class="fas fa-crown me-2"></i>Кастомная роль
+                    </h5>
+                    <form method="POST" action="{{ url_for('set_custom_role') }}" class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Название роли</label>
+                            <input type="text" class="form-control" name="custom_role" 
+                                   value="{{ player.custom_role or '' }}" 
+                                   placeholder="Введите название роли" maxlength="100">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Эмодзи</label>
+                            <input type="text" class="form-control" name="custom_role_emoji" 
+                                   value="{{ player.custom_role_emoji or '' }}" 
+                                   placeholder="😎" maxlength="10">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Цвет роли</label>
+                            <input type="color" class="form-control form-control-color" name="custom_role_color" 
+                                   value="{{ player.custom_role_color or '#ffd700' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Градиент (начальный цвет)</label>
+                            <input type="color" class="form-control form-control-color" name="gradient_start" 
+                                   value="#ff6b35">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Градиент (конечный цвет)</label>
+                            <input type="color" class="form-control form-control-color" name="gradient_end" 
+                                   value="#f7931e">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="use_gradient">
+                                <label class="form-check-label">Использовать градиент</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="animated_gradient" 
+                                       {{ 'checked' if player.custom_role_animated else '' }}>
+                                <label class="form-check-label">Анимированный градиент</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save me-2"></i>Сохранить кастомную роль
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+
+                    {% if player.can_set_free_custom_role %}
+                    <h5 class="text-success">
+                        <i class="fas fa-edit me-2"></i>Произвольная роль (разблокировано)
+                    </h5>
+                    <form method="POST" action="{{ url_for('set_player_role') }}" class="row g-3">
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" name="role" 
+                                   value="{{ player.role }}" 
+                                   placeholder="Введите свою роль">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-2"></i>Установить роль
+                            </button>
+                        </div>
+                    </form>
+                    {% elif not player.custom_role_purchased %}
+                    <div class="locked-role-section p-3 rounded" style="background: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.3);">
+                        <h5 class="text-danger">
+                            <i class="fas fa-lock me-2"></i>Произвольная роль заблокирована
+                        </h5>
+                        <p class="text-muted mb-2">
+                            Для разблокировки произвольной роли требуется:
+                        </p>
+                        <ul class="text-muted mb-3">
+                            <li>500+ репутации (у вас: {{ player.reputation }})</li>
+                            <li>Или покупка кастомной роли в магазине</li>
+                        </ul>
+                        <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar bg-danger" role="progressbar" 
+                                 style="width: {{ (player.reputation / 500 * 100) | round(1) if player.reputation < 500 else 100 }}%">
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            {% if player.reputation < 500 %}
+                                Осталось: {{ 500 - player.reputation }} репутации
+                            {% else %}
+                                Репутация достаточна! Функция разблокирована.
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Default Role -->
+                <div class="default-role">
+                    <form method="POST" action="{{ url_for('set_player_role') }}" style="display: inline;">
+                        <input type="hidden" name="role" value="Игрок">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-undo me-1"></i>Сбросить к роли "Игрок"
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Add social network field
+function addSocialNetwork() {
+    const container = document.getElementById('social-networks-container');
+    const newField = `
+        <div class="social-network-item d-flex align-items-center mb-2">
+            <select class="form-select me-2" name="social_type[]" style="max-width: 150px;">
+                <option value="discord">Discord</option>
+                <option value="telegram">Telegram</option>
+                <option value="vk">VK</option>
+                <option value="twitter">Twitter</option>
+                <option value="instagram">Instagram</option>
+                <option value="tiktok">TikTok</option>
+                <option value="steam">Steam</option>
+            </select>
+            <input type="text" class="form-control me-2" name="social_value[]" 
+                   placeholder="Ссылка или никнейм">
+            <button type="button" class="btn btn-danger btn-sm remove-social">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', newField);
+}
+
+function removeSocialNetwork(button) {
+    button.closest('.social-network-item').remove();
+}
+</script>
+
+<style>
+/* Profile customization styles */
+.profile-section {
+    background: var(--bs-dark);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Title and Role Management Styles */
+.title-card, .role-card {
+    background: rgba(52, 58, 64, 0.8);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.title-card:hover, .role-card:hover {
+    border-color: rgba(255, 193, 7, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+}
+
+.title-card.active-title, .role-card.active-role {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.title-card.active-title::before, .role-card.active-role::before {
+    content: "✓";
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #28a745;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.role-name {
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 0.5rem;
+}
+
+.role-source {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+</style>
+{% endblock %}
